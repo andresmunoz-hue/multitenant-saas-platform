@@ -1,7 +1,7 @@
 # Plan de implementación — Senior Data Engineer (SAAS multi-tenant)
 
-**Estado:** plan + modelo inicial listos. **Sin credenciales / sin Databricks cloud** en esta fase.  
-**Repo local:** `multitenant-saas-platform` (no hacer commit hasta acordarlo).  
+**Estado:** implementado (MVP). Tests locales verdes; e2e Delta verificado en Docker Linux.  
+**Repo local:** `multitenant-saas-platform`.  
 **Modelo de datos:** `docs/modelo_inicial.md`.
 
 ---
