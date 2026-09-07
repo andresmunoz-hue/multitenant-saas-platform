@@ -18,17 +18,28 @@ Para Community: subir notebook y usar `run_pipeline(..., spark=spark)` apuntando
 | `dashboard` | (default) | UI en http://localhost:8501 |
 | `pipeline` | `batch` | Ejecución on-demand del CLI |
 | `pipeline-init` | `init` | Backfill one-shot de todos los tenants → `./data` |
+| `pipeline-smoke` | `smoke` | Smoke MVP: tenant `sv`, 2025-03-01..07 |
 
 ## Uso
 
 ```bash
 docker compose build
 
-# Materializar capas
+# Smoke rápido (1 tenant)
+docker compose --profile smoke run --rm pipeline-smoke
+
+# Materializar capas (todos los tenants)
 docker compose --profile init run --rm pipeline-init
 
-# UI
+# UI (Gold / Quality / Quarantine)
 docker compose up -d dashboard
+```
+
+Smoke con re-run idempotente:
+
+```bash
+bash scripts/smoke_e2e.sh
+# Windows: pwsh scripts/smoke_e2e.ps1
 ```
 
 Reproceso puntual:
@@ -37,6 +48,14 @@ Reproceso puntual:
 docker compose --profile batch run --rm pipeline \
   python3 -m saas_pipeline.cli --env dev --tenant sv \
   --start-date 2025-03-01 --end-date 2025-03-15 --layer all
+```
+
+Segundo CSV de muestra (`batch2`, julio 2025, Delta bajo `data/*_batch2`):
+
+```bash
+docker compose --profile batch run --rm pipeline \
+  python3 -m saas_pipeline.cli --env batch2 --tenant all \
+  --start-date 2025-07-01 --end-date 2025-07-31 --layer all
 ```
 
 ## Imágenes

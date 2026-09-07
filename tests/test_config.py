@@ -33,3 +33,15 @@ def test_cli_overrides_dates():
     assert cfg.execution.start_date == "2025-03-01"
     assert cfg.execution.end_date == "2025-03-31"
     assert cfg.execution.tenant == "hn"
+
+
+def test_batch2_env_and_raw_path_override():
+    cfg = load_config(env="batch2", tenant="sv")
+    assert "batch2" in str(cfg.paths.raw_deliveries)
+    assert cfg.paths.bronze == "data/bronze_batch2"
+    cfg2 = load_config(
+        env="dev",
+        tenant="sv",
+        overrides={"paths": {"raw_deliveries": "raw/custom.csv"}},
+    )
+    assert cfg2.paths.raw_deliveries == "raw/custom.csv"

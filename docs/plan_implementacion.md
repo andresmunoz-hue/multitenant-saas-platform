@@ -13,8 +13,11 @@ Pipeline Medallion multi-tenant (**Bronze → Silver → Gold**) con Clean Archi
 | Gold | `daily_metrics_by_delivery_type` |
 | CI | GitHub Actions: **ruff** + **pytest** (sin smoke cloud) |
 | Mentoría | `mentoring/bad_code.py` → review → `good_code.py` |
-| Dashboard | Streamlit sobre Gold (`dashboard/`) |
+| Dashboard | Streamlit: Gold + Quality + Quarantine (`dashboard/`) |
 | Runtime local | `docker-compose.yml` (pipeline Spark/Delta + UI) |
+| Smoke e2e | Perfil `smoke` + `scripts/smoke_e2e.sh` / `.ps1` (tenant `sv`, re-run) |
+| CLI | `--raw-deliveries` / `--raw-materials` + BATCH SUMMARY |
+| Tests extra | Fronteras SCD2 inclusivas + determinismo / replaceWhere |
 
 ## Fuera de alcance (a propósito)
 

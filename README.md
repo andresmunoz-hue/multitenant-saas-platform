@@ -17,9 +17,11 @@ pytest -q
 
 # 2) Pipeline + dashboard (Docker)
 docker compose build
-docker compose --profile init run --rm pipeline-init
+docker compose --profile smoke run --rm pipeline-smoke   # 1 tenant, 1 semana
 docker compose up -d dashboard
-# → http://localhost:8501
+# → http://localhost:8501  (tabs: Gold · Quality · Quarantine)
+# Smoke completo (2 corridas idempotentes):
+#   bash scripts/smoke_e2e.sh   |   pwsh scripts/smoke_e2e.ps1
 ```
 
 Sin Docker (pipeline nativo; en Windows puede fallar Delta por Hadoop — preferir Docker):
@@ -28,6 +30,25 @@ Sin Docker (pipeline nativo; en Windows puede fallar Delta por Hadoop — prefer
 python -m saas_pipeline.cli --env dev --tenant sv \
   --start-date 2025-01-01 --end-date 2025-06-30 --layer all
 ```
+
+Segundo archivo de prueba (mismo esquema, fechas julio 2025, salida aislada en `data/*_batch2`):
+
+```bash
+python -m saas_pipeline.cli --env batch2 --tenant sv \
+  --start-date 2025-07-01 --end-date 2025-07-31 --layer all
+```
+
+O override de path sin cambiar de env:
+
+```bash
+python -m saas_pipeline.cli --env dev --tenant sv \
+  --raw-deliveries raw/global_mobility_data_entrega_productos_batch2.csv \
+  --start-date 2025-07-01 --end-date 2025-07-31 --layer all
+```
+
+CSV: `raw/global_mobility_data_entrega_productos_batch2.csv` (regenerable con `python scripts/generate_batch2_csv.py`).
+
+Al final de cada corrida el CLI imprime un **BATCH SUMMARY** (filas bronze/silver/gold + cuarentena + quality).
 
 ## Qué hace el flujo
 

@@ -67,3 +67,37 @@ services:
       ]
     profiles:
       - init
+
+  # Fast MVP smoke: single tenant, one week. Also usable by scripts/smoke_e2e.sh
+  pipeline-smoke:
+    image: saas-pipeline:local
+    build:
+      context: .
+      dockerfile: docker/pipeline/Dockerfile
+    container_name: saas-pipeline-smoke
+    volumes:
+      - ./data:/app/data
+      - ./raw:/app/raw
+      - ./config:/app/config:ro
+    environment:
+      - DELTA_JARS_DIR=/opt/delta-jars
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    command:
+      [
+        "python3",
+        "-m",
+        "saas_pipeline.cli",
+        "--env",
+        "dev",
+        "--tenant",
+        "sv",
+        "--start-date",
+        "2025-03-01",
+        "--end-date",
+        "2025-03-07",
+        "--layer",
+        "all",
+      ]
+    profiles:
+      - smoke

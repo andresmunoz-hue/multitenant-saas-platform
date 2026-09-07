@@ -1,0 +1,17 @@
+# Alternate input file for local regression / second-batch demos.
+# Same schema as the primary deliveries CSV; dates in July 2025.
+paths:
+  raw_deliveries: raw/global_mobility_data_entrega_productos_batch2.csv
+  bronze: data/bronze_batch2
+  silver: data/silver_batch2
+  gold: data/gold_batch2
+  quarantine_root: data/batch2
+  quality_logs: data/batch2/shared/quality_logs
+
+execution:
+  start_date: "2025-07-01"
+  end_date: "2025-07-31"
+  fail_fast: false
+
+quality:
+  fail_on_critical: false
