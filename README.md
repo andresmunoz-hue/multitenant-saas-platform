@@ -60,7 +60,7 @@ Ver **[docs/README.md](docs/README.md)** (arquitectura, modelo, stack Docker, on
 
 ## CI
 
-GitHub Actions en `develop` / `main`: solo **ruff** + **pytest**.  
+GitHub Actions en `dev` / `main`: solo **ruff** + **pytest**.  
 No corre el pipeline e2e en Actions (sin credenciales / entorno lakehouse compartido).
 
 ## Alcance consciente
