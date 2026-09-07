@@ -1,4 +1,8 @@
-"""SCD2 boundary and anomaly determinism tests."""
+"""SCD2 boundary and anomaly determinism tests.
+
+Locks inclusive ``[valid_from, valid_to]`` join behavior, gap → quarantine,
+and deterministic anomaly counts. See ``docs/functions_and_tests.md``.
+"""
 
 from __future__ import annotations
 
@@ -11,12 +15,14 @@ from saas_pipeline.spark import build_spark
 
 @pytest.fixture(scope="module")
 def spark():
+    """Shared local Spark session for SCD boundary tests."""
     session = build_spark("tests-scd-boundary")
     yield session
     session.stop()
 
 
 def _dim(spark, rows_csv: str, tmp):
+    """Build a typed materials dim DataFrame from inline CSV text."""
     path = tmp / "dim.csv"
     path.write_text(rows_csv, encoding="utf-8")
     return (
@@ -30,6 +36,7 @@ def _dim(spark, rows_csv: str, tmp):
 
 
 def _facts(spark, rows_csv: str, tmp):
+    """Build a typed fact DataFrame from inline CSV text."""
     path = tmp / "fact.csv"
     path.write_text(rows_csv, encoding="utf-8")
     return (

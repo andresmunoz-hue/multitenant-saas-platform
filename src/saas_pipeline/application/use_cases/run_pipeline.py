@@ -28,6 +28,7 @@ def run_for_tenant(
     start_date: str | None,
     end_date: str | None,
 ) -> dict[str, Any]:
+    """Execute selected Medallion layers for one tenant; return a layer stats dict."""
     print(f"==> tenant={tenant} layer={layer} batch={batch_id}")
     summary: dict[str, Any] = {"tenant": tenant, "ok": True}
     if layer in ("bronze", "all"):
@@ -62,6 +63,7 @@ def _print_batch_summary(
     tenant_summaries: list[dict[str, Any]],
     failures: list[str],
 ) -> None:
+    """Print aggregated counters across tenants (demo / ops observability)."""
     bronze_written = sum(s.get("bronze", {}).get("rows_written", 0) for s in tenant_summaries)
     bronze_q = sum(
         s.get("bronze", {}).get("rows_quarantined_invalid_fecha", 0) for s in tenant_summaries
@@ -99,7 +101,11 @@ def run_pipeline(
     raw_deliveries: str | None = None,
     raw_materials: str | None = None,
 ) -> int:
-    """Application entry used by CLI and notebooks (Databricks can pass existing spark)."""
+    """Application entry used by CLI and notebooks (Databricks can pass existing spark).
+
+    Optional ``raw_deliveries`` / ``raw_materials`` override ``cfg.paths`` without a new env.
+    Prints a BATCH SUMMARY and returns ``0`` on success, ``1`` if any tenant failed.
+    """
     overrides: dict[str, Any] = {"execution": {"tenant": tenant.lower()}}
     if start_date:
         overrides["execution"]["start_date"] = start_date

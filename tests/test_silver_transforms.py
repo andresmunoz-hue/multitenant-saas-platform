@@ -1,5 +1,9 @@
-"""Unit tests for silver transform helpers and SCD temporal join."""
+"""Unit tests for silver transform helpers and SCD temporal join.
 
+Covers pure unit conversion, DataFrame normalization, delivery-type domain,
+anomaly quarantine/discard, and historical SCD2 join (not ``is_current`` only).
+See ``docs/functions_and_tests.md``.
+"""
 
 import pytest
 from pyspark.sql import functions as F
@@ -16,18 +20,21 @@ from saas_pipeline.spark import build_spark
 
 @pytest.fixture(scope="module")
 def spark():
+    """Shared local Spark session for this module."""
     session = build_spark("tests-silver")
     yield session
     session.stop()
 
 
 def test_cs_to_st_conversion():
+    """CS multiplies by factor; ST stays as-is; case-insensitive unit."""
     assert cs_to_st(2, "CS", 20) == 40
     assert cs_to_st(5, "ST", 20) == 5
     assert cs_to_st(1.5, "cs", 20) == 30.0
 
 
 def test_normalize_units_dataframe(spark, tmp_path_factory):
+    """DataFrame helper adds ``cantidad_normalizada_st`` correctly."""
     tmp = tmp_path_factory.mktemp("units")
     csv_path = tmp / "units.csv"
     csv_path.write_text("cantidad,unidad\n2.0,CS\n3.0,ST\n", encoding="utf-8")
@@ -43,6 +50,7 @@ def test_normalize_units_dataframe(spark, tmp_path_factory):
 
 
 def test_filter_invalid_delivery_types():
+    """Valid types pass; COBR/Z99 are rejected."""
     assert is_valid_delivery_type("ZPRE")
     assert is_valid_delivery_type("Z04")
     assert not is_valid_delivery_type("COBR")
@@ -50,6 +58,7 @@ def test_filter_invalid_delivery_types():
 
 
 def test_anomaly_quarantine_and_discard(spark, tmp_path_factory):
+    """Orphans/qty issues quarantine; invalid tipo discarded; one clean row remains."""
     tmp = tmp_path_factory.mktemp("anom")
     bronze_csv = tmp / "bronze.csv"
     bronze_csv.write_text(
@@ -81,6 +90,7 @@ def test_anomaly_quarantine_and_discard(spark, tmp_path_factory):
 
 
 def test_temporal_scd_join_uses_historical_version(spark, tmp_path_factory):
+    """Join by fecha window returns historical version, not only ``is_current``."""
     tmp = tmp_path_factory.mktemp("scd")
     fact_csv = tmp / "fact.csv"
     fact_csv.write_text(

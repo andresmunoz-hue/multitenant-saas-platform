@@ -30,6 +30,7 @@ def run_quality_checks(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> list[dict]:
+    """Run Silver DQ checks, append to ``quality_logs``, optionally fail on critical."""
     start = (start_date or str(cfg.execution.start_date)).replace("-", "")
     end = (end_date or str(cfg.execution.end_date)).replace("-", "")
 

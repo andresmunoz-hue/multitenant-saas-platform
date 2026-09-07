@@ -6,6 +6,7 @@ from saas_pipeline.domain.constants import DEFAULT_CS_TO_ST_FACTOR
 def cs_to_st(
     cantidad: float, unidad: str, factor: int = DEFAULT_CS_TO_ST_FACTOR
 ) -> float:
+    """Normalize quantity to ST (stock). CS (cases) multiplies by ``factor`` (default 20)."""
     if str(unidad).upper() == "CS":
         return float(cantidad) * factor
     return float(cantidad)

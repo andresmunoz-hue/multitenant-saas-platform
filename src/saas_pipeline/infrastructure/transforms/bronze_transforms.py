@@ -24,6 +24,7 @@ DELIVERIES_SCHEMA = T.StructType(
 
 
 def is_valid_fecha(col_name: str = "fecha_proceso"):
+    """Spark predicate: non-null ``yyyyMMdd`` string that parses to a real date."""
     return (
         F.col(col_name).isNotNull()
         & (F.length(F.trim(F.col(col_name).cast("string"))) == 8)
@@ -33,6 +34,7 @@ def is_valid_fecha(col_name: str = "fecha_proceso"):
 
 
 def prepare_bronze(df: DataFrame, batch_id: str) -> DataFrame:
+    """Attach tenant id (from ``pais``), batch id, and ingestion timestamp."""
     return (
         df.withColumn("_tenant_id", F.lower(F.trim(F.col("pais"))))
         .withColumn("_ingestion_timestamp", F.lit(datetime.utcnow()).cast("timestamp"))

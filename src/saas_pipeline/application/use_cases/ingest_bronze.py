@@ -28,7 +28,11 @@ def ingest_bronze(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, int]:
-    """Ingest RAW deliveries into Bronze Delta for one tenant."""
+    """Ingest RAW deliveries into Bronze Delta for one tenant.
+
+    Valid ``fecha_proceso`` rows in the date window are overwritten via
+    ``replaceWhere``. Invalid/null dates go to bronze quarantine.
+    """
     start = start_date or str(cfg.execution.start_date)
     end = end_date or str(cfg.execution.end_date)
     partitions = date_range_yyyymmdd(start, end)

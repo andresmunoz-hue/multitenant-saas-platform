@@ -30,6 +30,7 @@ from saas_pipeline.infrastructure.transforms.silver_transforms import (
 def _upsert_dim_materials(
     spark: SparkSession, cfg: DictConfig, tenant: str, batch_id: str
 ) -> DataFrame:
+    """Load materials catalog into Silver dim (create or MERGE on material+valid_from)."""
     source = abs_path(str(cfg.paths.raw_materials))
     src = (
         spark.read.option("header", True)
@@ -71,6 +72,7 @@ def _upsert_dim_materials(
 def _merge_fact_deliveries(
     spark: SparkSession, cfg: DictConfig, tenant: str, facts: DataFrame
 ) -> None:
+    """MERGE Silver facts on natural business key (tenant+fecha+transporte+ruta+material+tipo)."""
     target_path = silver_fact(cfg, tenant)
     payload = facts.drop("fecha_proceso_date")
 
@@ -103,6 +105,7 @@ def _merge_fact_deliveries(
 
 
 def _write_quarantine(df: DataFrame, path: str, mode: str = "overwrite") -> int:
+    """Persist quarantine Delta table; return row count (0 skips write)."""
     count = df.count()
     if count == 0:
         return 0
@@ -118,6 +121,10 @@ def build_silver(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, int]:
+    """Build Silver dim + fact for one tenant (anomalies, SCD2 join, MERGE).
+
+    Returns counts for facts written, quarantine, discarded types, and dim rows.
+    """
     start = start_date or str(cfg.execution.start_date)
     end = end_date or str(cfg.execution.end_date)
     start_key = start.replace("-", "")

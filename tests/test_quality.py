@@ -1,4 +1,8 @@
-"""Quality check unit tests (file-backed Spark frames for Windows compatibility)."""
+"""Quality check unit tests (file-backed Spark frames for Windows compatibility).
+
+Asserts critical/warning severity and failure detection for qty, delivery type, and FK.
+See ``docs/functions_and_tests.md``.
+"""
 
 from pathlib import Path
 
@@ -13,6 +17,7 @@ from saas_pipeline.spark import build_spark
 
 
 def test_quality_checks_detect_failures(tmp_path: Path):
+    """One good row + one bad row: qty, domain, and FK checks must fail."""
     csv_path = tmp_path / "fact.csv"
     csv_path.write_text(
         "cantidad_normalizada_st,tipo_entrega,material_descripcion,material_categoria\n"

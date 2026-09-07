@@ -23,6 +23,7 @@ MATERIALS_SCHEMA = T.StructType(
 
 
 def normalize_units(df: DataFrame, cs_to_st_factor: int) -> DataFrame:
+    """Add ``cantidad_normalizada_st`` (CS × factor, otherwise raw ``cantidad``)."""
     return df.withColumn(
         "cantidad_normalizada_st",
         F.when(
@@ -33,6 +34,7 @@ def normalize_units(df: DataFrame, cs_to_st_factor: int) -> DataFrame:
 
 
 def classify_delivery_flags(df: DataFrame, routine: list[str], bonus: list[str]) -> DataFrame:
+    """Flag routine vs bonus delivery types as boolean columns."""
     return df.withColumn("is_routine_delivery", F.col("tipo_entrega").isin(routine)).withColumn(
         "is_bonus_delivery", F.col("tipo_entrega").isin(bonus)
     )
@@ -132,6 +134,7 @@ def build_fact_payload(
     tenant: str,
     batch_id: str,
 ) -> DataFrame:
+    """Project enriched deliveries into the Silver ``fact_deliveries`` column set."""
     factor = int(cfg.business.cs_to_st_factor)
     routine = list(cfg.business.routine_types)
     bonus = list(cfg.business.bonus_types)

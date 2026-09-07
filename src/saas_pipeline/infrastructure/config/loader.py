@@ -33,8 +33,8 @@ def load_config(
 ) -> DictConfig:
     """Load and merge YAML configs.
 
-    Precedence: base.yaml < env/<env>.yaml < tenants/<tenant>.yaml < overrides.
-    When tenant is "all" or None, tenant-specific file is skipped.
+    Precedence: ``base.yaml`` < ``env/<env>.yaml`` < ``tenants/<tenant>.yaml`` < overrides.
+    When tenant is ``\"all\"`` or None, the tenant-specific file is skipped.
     """
     base_path = config_dir() / "base.yaml"
     env_path = config_dir() / "env" / f"{env}.yaml"
@@ -65,6 +65,7 @@ def load_config(
 
 
 def resolve_tenants(cfg: DictConfig) -> list[str]:
+    """Resolve ``execution.tenant`` to a concrete list (``all`` expands ``KNOWN_TENANTS``)."""
     tenant = str(cfg.execution.tenant).lower()
     if tenant == "all":
         return list(KNOWN_TENANTS)

@@ -16,6 +16,7 @@ def build_gold(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, int]:
+    """Aggregate Silver facts into Gold ``daily_metrics_by_delivery_type`` (replaceWhere)."""
     start = (start_date or str(cfg.execution.start_date)).replace("-", "")
     end = (end_date or str(cfg.execution.end_date)).replace("-", "")
 

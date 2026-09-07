@@ -80,7 +80,7 @@ data/             salida Delta (no versionar)
 
 ## Documentación
 
-Ver **[docs/README.md](docs/README.md)** (arquitectura, modelo, stack Docker, onboarding, observaciones, infra).
+Ver **[docs/README.md](docs/README.md)** (arquitectura, **funciones y tests**, modelo, stack Docker, onboarding, observaciones, infra).
 
 ## CI
 

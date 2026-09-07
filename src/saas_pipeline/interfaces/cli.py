@@ -9,6 +9,7 @@ from saas_pipeline.application.use_cases.run_pipeline import run_pipeline
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """CLI flags for env/tenant/dates/layer and optional raw path overrides."""
     parser = argparse.ArgumentParser(
         description="SAAS multi-tenant Bronze/Silver/Gold pipeline",
     )
@@ -41,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Parse argv and run the Medallion pipeline; return process exit code."""
     args = build_parser().parse_args(argv)
     return run_pipeline(
         env=args.env,
