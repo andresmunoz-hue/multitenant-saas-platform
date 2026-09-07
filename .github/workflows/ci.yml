@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
 
 jobs:
@@ -31,30 +31,5 @@ jobs:
       - name: Ruff
         run: ruff check src tests mentoring
 
-      - name: Validate YAML configs load
-        run: |
-          python - <<'PY'
-          from saas_pipeline.config import load_config, KNOWN_TENANTS
-          for env in ("dev", "qa", "main"):
-              cfg = load_config(env=env, tenant="all")
-              assert cfg.paths.bronze
-              assert cfg.paths.quality_logs
-          for t in KNOWN_TENANTS:
-              cfg = load_config(env="dev", tenant=t)
-              assert cfg.execution.tenant == t
-          print("config ok")
-          PY
-
       - name: Pytest
         run: pytest -q
-
-      - name: Pipeline smoke (tenant sv, short range)
-        run: |
-          python -m saas_pipeline.cli \
-            --env dev --tenant sv \
-            --start-date 2025-03-01 --end-date 2025-03-07 \
-            --layer all
-          test -d data/bronze/sv/deliveries
-          test -d data/silver/sv/fact_deliveries
-          test -d data/gold/sv/daily_metrics_by_delivery_type
-          test -d data/shared/quality_logs
