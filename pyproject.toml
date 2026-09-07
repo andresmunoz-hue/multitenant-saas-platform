@@ -22,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-saas-pipeline = "saas_pipeline.cli:main"
+saas-pipeline = "saas_pipeline.interfaces.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
