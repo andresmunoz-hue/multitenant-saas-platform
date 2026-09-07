@@ -1,0 +1,12 @@
+.venv/
+.hadoop/
+data/
+_tech_test_extract/
+.git/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+_pytest_out.txt
+spark-warehouse/
+metastore_db/

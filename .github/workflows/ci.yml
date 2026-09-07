@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Ruff
+        run: ruff check src tests mentoring
+
+      - name: Validate YAML configs load
+        run: |
+          python - <<'PY'
+          from saas_pipeline.config import load_config, KNOWN_TENANTS
+          for env in ("dev", "qa", "main"):
+              cfg = load_config(env=env, tenant="all")
+              assert cfg.paths.bronze
+              assert cfg.paths.quality_logs
+          for t in KNOWN_TENANTS:
+              cfg = load_config(env="dev", tenant=t)
+              assert cfg.execution.tenant == t
+          print("config ok")
+          PY
+
+      - name: Pytest
+        run: pytest -q
+
+      - name: Pipeline smoke (tenant sv, short range)
+        run: |
+          python -m saas_pipeline.cli \
+            --env dev --tenant sv \
+            --start-date 2025-03-01 --end-date 2025-03-07 \
+            --layer all
+          test -d data/bronze/sv/deliveries
+          test -d data/silver/sv/fact_deliveries
+          test -d data/gold/sv/daily_metrics_by_delivery_type
+          test -d data/shared/quality_logs
