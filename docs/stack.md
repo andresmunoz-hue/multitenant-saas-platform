@@ -20,6 +20,17 @@ Para Community: subir notebook y usar `run_pipeline(..., spark=spark)` apuntando
 | `pipeline-init` | `init` | Backfill one-shot de todos los tenants → `./data` |
 | `pipeline-smoke` | `smoke` | Smoke MVP: tenant `sv`, 2025-03-01..07 |
 
+Queries de demo (archivo **separado**):
+
+```bash
+# Requiere data ya materializada (smoke o init)
+docker compose -f docker-compose.queries.yml run --rm queries
+# otro tenant:
+docker compose -f docker-compose.queries.yml run --rm -e QUERY_TENANT=hn queries
+```
+
+SQL de referencia: `scripts/queries/demo_queries.sql` · runner: `scripts/queries/run_demo_queries.py`.
+
 ## Uso
 
 ```bash

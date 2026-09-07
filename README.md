@@ -22,6 +22,10 @@ docker compose up -d dashboard
 # → http://localhost:8501  (tabs: Gold · Quality · Quarantine)
 # Smoke completo (2 corridas idempotentes):
 #   bash scripts/smoke_e2e.sh   |   pwsh scripts/smoke_e2e.ps1
+
+# 3) Queries de demo / sustentación (Compose separado)
+docker compose -f docker-compose.queries.yml run --rm queries
+# QUERY_TENANT=hn docker compose -f docker-compose.queries.yml run --rm queries
 ```
 
 Sin Docker (pipeline nativo; en Windows puede fallar Delta por Hadoop — preferir Docker):

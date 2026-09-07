@@ -111,3 +111,4 @@ Los módulos raíz (`bronze.py`, `silver.py`, `quality.py`, `cli.py`, …) reexp
 |---|---|
 | `docker compose --profile smoke run --rm pipeline-smoke` | Pipeline completo tenant `sv`, 1 semana |
 | `scripts/smoke_e2e.sh` / `.ps1` | Dos corridas + presencia de Gold parquet (idempotencia operativa) |
+| `docker compose -f docker-compose.queries.yml run --rm queries` | Spark SQL demo (Gold/Silver/Bronze/quarantine/quality) |

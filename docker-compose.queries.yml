@@ -1,0 +1,30 @@
+# Separate Compose file: demo Spark SQL queries against ./data Medallion tables.
+#
+# Prerequisites (once):
+#   docker compose build pipeline
+#   docker compose --profile smoke run --rm pipeline-smoke
+#
+# Run queries:
+#   docker compose -f docker-compose.queries.yml run --rm queries
+#
+# Another tenant:
+#   docker compose -f docker-compose.queries.yml run --rm -e QUERY_TENANT=hn queries
+
+services:
+  queries:
+    image: saas-pipeline:local
+    build:
+      context: .
+      dockerfile: docker/pipeline/Dockerfile
+    container_name: saas-queries
+    volumes:
+      - ./data:/app/data:ro
+      - ./scripts/queries:/app/scripts/queries:ro
+    environment:
+      DELTA_JARS_DIR: /opt/delta-jars
+      PYSPARK_PYTHON: python3
+      PYSPARK_DRIVER_PYTHON: python3
+      QUERY_TENANT: ${QUERY_TENANT:-sv}
+      QUERY_DATA_ROOT: ${QUERY_DATA_ROOT:-/app/data}
+    working_dir: /app
+    command: ["python3", "scripts/queries/run_demo_queries.py"]
