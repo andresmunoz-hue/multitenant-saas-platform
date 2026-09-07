@@ -1,0 +1,30 @@
+# Runtime / artifacts
+data/
+.venv/
+.hadoop/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.DS_Store
+*.log
+spark-warehouse/
+metastore_db/
+derby.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Extracted brief (local working copy; keep docs/ extracts)
+_tech_test_extract/
