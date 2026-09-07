@@ -1,0 +1,472 @@
+﻿Prueba Técnica
+Senior Data Engineer
+Proyecto SAAS — Plataforma de Datos Multi-Tenant
+Duración: 3 días
+Entrega: Repositorio GitHub público + sustentación
+
+1. Contexto
+Formas parte del equipo de Data & Analytics dentro de Apex Digital / M5, área transversal que habilita productos analíticos y datos gobernados para múltiples unidades de negocio de una corporación multinacional de bebidas y alimentos (CBC, Beliv, BIA, entre otras).
+La organización está consolidando una plataforma de datos empresarial sobre Databricks + ADLS Gen2 + Unity Catalog, con el objetivo de habilitar productos analíticos y, en una segunda fase, agentes de IA conectados a los datos core del negocio.
+El proyecto SAAS define una metodología de ingesta y procesamiento aplicable de forma multi-empresa / multi-tenant: cada unidad de negocio (tenant) puede onboarding-arse al pipeline con mínima fricción, manteniendo aislamiento lógico de datos, trazabilidad y consistencia de estándares.
+La arquitectura del proyecto ya está definida y se documenta en la sección 5 de este documento. El objetivo de la prueba es implementar el pipeline sobre esa arquitectura, no diseñarla desde cero.
+2. Alcance y filosofía de la prueba
+La prueba está dimensionada para 3 días de trabajo (aproximadamente 12-15 horas en total). Recibes una arquitectura ya definida y un conjunto de datos de entrada. Tu tarea es implementar el pipeline siguiendo las convenciones provistas.
+Consideraciones para la entrega:
+Un MVP funcional bien razonado se valora más que un alcance amplio mal terminado.
+Documenta en el README qué decidiste dejar fuera y la razón.
+El archivo docs/observations.md es obligatorio. Allí registras: decisiones de la arquitectura provista con las que no estás de acuerdo (con tu propuesta alternativa), áreas con ambigüedad y cómo las resolviste, y mejoras tecnológicas que propondrías a futuro. Mínimo 3 observaciones sustantivas. No cambies la arquitectura unilateralmente: si discrepas, documéntalo aquí y se discute en la sustentación.
+Cada decisión de implementación debe poder ser explicada en la sustentación.
+El uso de asistentes de IA está permitido. El código que no puedas explicar afecta negativamente la evaluación.
+Distribución de tiempo sugerida
+Día
+Foco
+Entregables del día
+Día 1 ~4 h
+Setup + Bronze
+Lectura de la arquitectura, estructura del repo, configuración base, capa Bronze funcionando.
+Día 2 ~5 h
+Silver + DQ
+Capa Silver con SCD Type 2, validaciones de calidad, manejo de anomalías.
+Día 3 ~5 h
+Gold, CI, mentoría, doc
+Capa Gold, GitHub Actions, ejercicio de code review, README, observaciones.
+
+3. Stack tecnológico
+El stack objetivo del proyecto incluye los siguientes componentes. La implementación se realiza con un subconjunto; el resto está descrito en la arquitectura provista:
+Componente
+Rol en la plataforma
+En esta prueba
+Databricks (PySpark)
+Motor de procesamiento Bronze/Silver/Gold
+Implementación
+Delta Lake
+Formato de almacenamiento con ACID
+Implementación
+Unity Catalog
+Gobierno, aislamiento por tenant
+Provisto en arquitectura
+ADLS Gen2
+Almacenamiento por capas
+Simulado con rutas locales
+MongoDB / Couchbase
+Fuentes operacionales / serving
+Provisto en arquitectura
+Streaming (Auto Loader)
+Ingesta incremental
+Provisto en arquitectura
+Terraform
+Infra como código
+Snippet ilustrativo
+GitHub + GitHub Actions
+Versionado y CI
+Implementación
+
+La implementación puede ejecutarse con Spark localmente o sobre Databricks Community / trial. El código debe ser compatible con Databricks en ambos casos.
+Versiones mínimas requeridas (alineadas con Databricks Runtime 15.x LTS):
+Python 3.11 o superior.
+PySpark 3.5.x.
+Delta Lake 3.x (paquete delta-spark).
+El README debe especificar las versiones exactas utilizadas y un Makefile o script equivalente para levantar el entorno (venv, poetry, uv u otro).
+
+4. Datasets de entrada
+Se adjuntan dos archivos CSV:
+4.1 global_mobility_data_entrega_productos.csv
+Tabla transaccional con ~3,100 registros de entregas de producto en 6 tenants (países) a lo largo de Q1-Q2 2025. Estructura:
+Columna
+Tipo lógico
+Descripción
+pais
+string
+Código de país. Para esta prueba se interpreta como tenant_id.
+fecha_proceso
+string (YYYYMMDD)
+Fecha en que se generó el registro. Clave de partición.
+transporte
+long
+Identificador del vehículo / unidad de transporte.
+ruta
+long
+Identificador de la ruta de entrega.
+tipo_entrega
+string
+ZPRE/ZVE1 = rutina; Z04/Z05 = bonificación; otros = descartar.
+material
+string
+SKU del producto entregado. FK lógica al catálogo (4.2).
+precio
+decimal
+Precio unitario al momento de la transacción.
+cantidad
+decimal
+Cantidad entregada.
+unidad
+string
+CS = caja (20 unidades); ST = unidad individual.
+
+El dataset contiene anomalías intencionales (~4% del total): fechas nulas o inválidas, cantidades negativas y en cero, duplicados exactos, materiales que no existen en el catálogo, y valores de tipo_entrega fuera de las 4 categorías válidas. La estrategia de manejo de cada tipo se especifica en la arquitectura provista (sección 5.6).
+4.2 materials_catalog.csv
+Catálogo maestro de materiales (SKUs) con estructura SCD Type 2: algunos materiales tienen múltiples registros que reflejan cambios históricos en precio, categoría o descripción. Estructura:
+Columna
+Tipo lógico
+Descripción
+material
+string
+SKU del producto. No es PK por sí solo (hay múltiples versiones).
+descripcion
+string
+Nombre comercial del producto en esa versión.
+categoria
+string
+Categoría de producto en esa versión.
+precio_base
+decimal
+Precio base vigente en el intervalo [valid_from, valid_to].
+valid_from
+date (YYYY-MM-DD)
+Inicio de vigencia del registro.
+valid_to
+date (YYYY-MM-DD)
+Fin de vigencia. 9999-12-31 = vigente actual.
+is_current
+boolean
+Flag de versión actual. Útil pero no fuente de verdad única.
+
+5. Arquitectura provista
+Esta sección define la arquitectura de referencia del proyecto SAAS. La implementación debe ceñirse a estas convenciones. Cualquier desacuerdo se registra en docs/observations.md para discusión en la sustentación.
+5.1 Visión general
+La plataforma sigue el patrón Medallion con tres capas lógicas. Cada capa cumple un rol específico y solo lee de la inmediata anterior:
+RAW: archivos crudos tal como llegan de la fuente, sin transformación. Solo lectura.
+Bronze: datos ingestados en formato Delta, preservando esquema original más columnas técnicas. Particionado por fecha y tenant.
+Silver: datos limpios, normalizados, enriquecidos con dimensiones (SCD Type 2). Es la zona de verdad para consumo analítico downstream.
+Gold: agregaciones y métricas de negocio. Modelado dimensional ligero.
+5.2 Estrategia de aislamiento multi-tenant
+El proyecto SAAS adopta aislamiento por schema dentro de un catálogo único por ambiente. Cada tenant tiene su propio schema en Unity Catalog. Esta decisión optimiza para:
+Onboarding ágil de nuevos tenants (no requiere crear catálogos, solo schemas).
+Gobierno centralizado de grants y políticas a nivel de catálogo.
+Compatibilidad con escenarios de análisis cross-tenant futuros (vistas en gold).
+Estructura de naming en Unity Catalog:
+  saas_<env>.bronze_<tenant>.<table>
+  saas_<env>.silver_<tenant>.<table>
+  saas_<env>.gold_<tenant>.<table>
+ 
+  Ejemplos:
+    saas_dev.bronze_sv.deliveries
+    saas_dev.silver_sv.fact_deliveries
+    saas_dev.silver_sv.dim_materials
+    saas_dev.gold_sv.daily_metrics_by_delivery_type
+
+Para esta prueba, donde Unity Catalog no aplica, se mapea a la estructura de paths siguiente. Esta es la estructura que el candidato debe implementar:
+  data/<layer>/<tenant>/<table>/fecha_proceso=YYYYMMDD/   # por tenant
+  data/<layer>_quarantine/<tenant>/<table>/               # cuarentena
+  data/shared/quality_logs/                               # cross-tenant
+ 
+  Ejemplos:
+    data/bronze/sv/deliveries/fecha_proceso=20250314/
+    data/silver/sv/fact_deliveries/fecha_proceso=20250314/
+    data/silver_quarantine/sv/fact_deliveries/
+    data/shared/quality_logs/
+
+Todas las tablas se escriben como Delta. La estructura de paths refleja la estructura de catálogos en Unity Catalog (sección anterior); en una migración a Databricks, los paths se mapean a tablas Unity con los mismos nombres lógicos.
+5.3 Convenciones de naming
+Tablas y columnas: snake_case en todas las capas.
+Tablas Silver de hechos: prefijo fact_. Dimensiones: prefijo dim_.
+Tablas Gold: nombre descriptivo del agregado, sin prefijo (ej: daily_metrics_by_delivery_type).
+Columnas técnicas: prefijo guion bajo (_ingestion_timestamp, _source_file, _tenant_id, _batch_id).
+Flags booleanos: prefijo is_ (ej: is_routine_delivery, is_bonus_delivery).
+Fechas en columnas técnicas: timestamp UTC; en columnas de negocio: tipo date.
+Códigos de tenant en minúscula en paths, schemas y la columna _tenant_id. La columna pais del CSV viene en mayúscula (SV, HN, etc.); el código debe normalizarla a minúscula al ingresar a Bronze.
+5.4 Particionado
+Bronze: particionado por fecha_proceso (yyyymmdd) y tenant_id.
+Silver fact_deliveries: particionado por fecha_proceso. La separación por tenant ya viene dada por el schema.
+Silver dim_materials: no particionado (cardinalidad baja).
+Gold: particionado por fecha si la tabla lo amerita por cardinalidad.
+5.5 Idempotencia y reprocesos
+La estrategia definida para garantizar idempotencia entre capas:
+Bronze: overwrite por partición (replaceWhere o equivalente sobre fecha_proceso + tenant_id). Una reejecución del mismo rango sobrescribe la partición correspondiente, no duplica.
+Silver fact_deliveries: MERGE INTO con clave de negocio compuesta (tenant_id, fecha_proceso, transporte, ruta, material, tipo_entrega). Actualiza si existe, inserta si no.
+Silver dim_materials: MERGE INTO con lógica SCD Type 2 sobre la clave material + valid_from.
+Gold: recomputo completo por partición de fecha. Las tablas Gold son derivadas, no autoritativas.
+5.6 Manejo de anomalías
+La política definida para cada tipo de anomalía:
+Tipo de anomalía
+Acción
+Justificación
+fecha_proceso nula o inválida
+Cuarentena
+Sin fecha no puede asignarse a partición. Revisión manual posterior.
+cantidad nula, negativa o cero
+Cuarentena
+Posible error de origen. No descartar silenciosamente.
+material no presente en el catálogo
+Cuarentena
+Romper integridad referencial debe ser visible y auditable.
+tipo_entrega fuera de las 4 válidas
+Descarte
+Regla de negocio: COBR y Z99 no pertenecen al alcance analítico.
+duplicado exacto (todas las columnas)
+Deduplicar
+Conservar una sola copia. No tratar como anomalía visible.
+precio nulo
+Cuarentena
+Sin precio las métricas de ingreso no son calculables.
+
+Las filas en cuarentena se escriben en una tabla paralela <layer>_quarantine_<tenant>.<table> con la columna técnica _quarantine_reason. Los descartes se contabilizan en métricas pero no se persisten.
+5.7 SCD Type 2 sobre dim_materials
+El catálogo de materiales se modela como SCD Type 2 con las siguientes reglas:
+Clave de negocio: material (SKU).
+Atributos versionados: descripcion, categoria, precio_base.
+Columnas de control: valid_from, valid_to, is_current.
+Una sola fila puede tener is_current = true por cada SKU.
+Las transacciones Silver se enriquecen con la versión vigente del material a la fecha del proceso, no con la versión actual. Esto requiere un join temporal de la forma:
+  fact_deliveries.fecha_proceso BETWEEN dim_materials.valid_from
+                                  AND dim_materials.valid_to
+
+5.8 Configuración
+Estructura jerárquica con OmegaConf:
+  config/base.yaml            # defaults compartidos
+  config/env/<env>.yaml       # overrides por ambiente (dev/qa/main)
+  config/tenants/<tenant>.yaml # overrides por tenant
+
+Parámetros mínimos a soportar:
+paths.bronze, paths.silver, paths.gold (rutas base por capa; el código compone el resto: <base>/<tenant>/<table>/...)
+paths.quarantine_root (ruta base; el código compone <quarantine_root>/<layer>_quarantine/<tenant>/<table>/)
+paths.quality_logs (ruta a la tabla Delta compartida de logs de calidad)
+execution.start_date, execution.end_date (rango de fecha_proceso a procesar, formato YYYY-MM-DD)
+execution.tenant (un código de tenant en minúscula, o "all" para procesar todos)
+execution.fail_fast (bool, default false): comportamiento cuando --tenant all y uno falla. Si true, aborta toda la corrida; si false, continúa con los demás tenants y reporta el fallo al final.
+quality.fail_on_critical (bool, default false): si una validación crítica falla, abortar antes de Gold para ese tenant.
+5.9 Tabla de logs de calidad
+Toda validación ejecutada se registra como tabla Delta en la ruta data/shared/quality_logs/ (en Databricks productivo: <env>.shared.quality_logs), con el siguiente esquema:
+  _run_id            string
+  _batch_id          string
+  tenant_id          string
+  layer              string  # bronze | silver | gold
+  table_name         string
+  check_name         string
+  check_severity     string  # critical | warning | info
+  records_checked    long
+  records_failed     long
+  check_passed       boolean
+  executed_at        timestamp
+
+
+
+
+
+
+5.10 Diagrama de la arquitectura
+Diagrama lógico de los flujos:
+ 
+  ┌──────────────┐
+  │  RAW (CSV)   │
+  └──────┬───────┘
+         │  overwrite por partición
+         ▼
+  ┌─────────────────────────────────┐
+  │ BRONZE: <tenant>.deliveries     │  ← Delta, particionado fecha+tenant
+  └──────┬──────────────────────────┘
+         │  MERGE INTO (clave de negocio)
+         ▼
+  ┌─────────────────────────────────┐  ┌────────────────────────────┐
+  │ SILVER:                         │  │ SHARED:                    │
+  │   <tenant>.fact_deliveries      │──┤   quality_logs             │
+  │   <tenant>.dim_materials (SCD2) │  │   quarantine_<table>       │
+  └──────┬──────────────────────────┘  └────────────────────────────┘
+         │  recompute por partición
+         ▼
+  ┌─────────────────────────────────┐
+  │ GOLD:                           │
+  │   <tenant>.daily_metrics_*      │
+  └─────────────────────────────────┘
+
+6. Implementación requerida
+Implementa el pipeline siguiendo la arquitectura definida en la sección 5. Las siguientes son las características obligatorias:
+6.1 Configuración (obligatorio)
+Parámetros controlados vía YAML con OmegaConf, en la estructura jerárquica definida en 5.8.
+Ejecución por tenant específico (--tenant sv) o todos (--tenant all).
+Rango de fechas parametrizable (--start-date, --end-date) con valor de fecha_proceso.
+Configuración mínima por ambiente: dev / qa / main (al menos los paths deben cambiar).
+6.2 Capa Bronze
+Ingesta del CSV a formato Delta, preservando esquema original.
+Particionado por fecha_proceso y tenant_id (según 5.4).
+Idempotencia por overwrite de partición (según 5.5).
+Columnas técnicas requeridas: _ingestion_timestamp, _source_file, _tenant_id, _batch_id.
+6.3 Capa Silver
+fact_deliveries con MERGE INTO según clave de negocio definida en 5.5.
+Normalización de unidades: convertir CS a ST (1 CS = 20 ST). Todos los registros deben quedar en unidad común.
+Filtrado de tipo_entrega: solo ZPRE, ZVE1, Z04, Z05.
+Flags is_routine_delivery (ZPRE, ZVE1) e is_bonus_delivery (Z04, Z05).
+Aplicación de las reglas de manejo de anomalías definidas en 5.6 (cuarentena en tabla paralela, descartes contabilizados).
+dim_materials implementada como SCD Type 2 según 5.7.
+Enriquecimiento de fact_deliveries con dim_materials usando join temporal (no usar solo is_current).
+6.4 Capa Gold
+Construye al menos una tabla Gold: daily_metrics_by_delivery_type por tenant. Granularidad: una fila por (tenant_id, fecha_proceso, tipo_entrega), con las métricas:
+total_units: suma de cantidad ya normalizada a ST (columna calculada en Silver, no la cantidad original).
+total_revenue: suma de (cantidad_normalizada_st * precio_transaccion). Usar el campo precio de la transacción, no precio_base del catálogo. El precio del catálogo se preserva en Silver como columna informativa, pero el revenue real es el de la transacción.
+active_routes: count distinct de ruta.
+active_transports: count distinct de transporte.
+6.5 Calidad de datos
+Implementa al menos 3 validaciones sobre Silver. Pueden ser checks propios bien estructurados.
+Los resultados se persisten en la tabla quality_logs según el esquema de 5.9.
+Cada validación declara su severidad (critical / warning / info).
+Si quality.fail_on_critical = true en config y alguna validación crítica falla, el pipeline debe abortar antes de Gold.
+7. CI/CD e infraestructura
+7.1 GitHub Actions (obligatorio)
+Workflow funcional que se ejecute en push y pull request, con como mínimo:
+Linter de Python (ruff, flake8 o equivalente) con configuración PEP8.
+Pruebas unitarias con pytest. Mínimo 3 pruebas significativas sobre transformaciones (conversión de unidades, filtrado, manejo de anomalías, lógica SCD).
+Validación de que los archivos YAML de configuración cargan correctamente.
+7.2 Terraform (snippet)
+Dentro de docs/infra.md describe qué provisionaría Terraform para soportar el onboarding de un tenant nuevo (schemas en Unity Catalog, paths en ADLS, secretos, etc.) e incluye un snippet ilustrativo (~30-50 líneas) del módulo principal. No se requiere que terraform plan funcione contra una cuenta real.
+8. Mentoría y revisión de código
+En el repositorio, dentro de la carpeta /mentoring/, incluye un archivo bad_code.py con el código provisto en el Anexo A. El código representa una entrega hipotética de un ingeniero junior del equipo.
+Entrega:
+Archivo code_review.md con al menos 4 observaciones puntuales y accionables. Para cada una: qué está mal, por qué importa, cómo se corrige.
+Una versión refactorizada en good_code.py.
+Una nota breve (aproximadamente un tercio de página) titulada "Cómo se lo explicaría al junior", indicando el estilo de feedback que aplicarías y qué temas le pedirías investigar por su cuenta.
+9. Documentación y sustentación
+9.1 README
+Estructura del repositorio.
+Instrucciones reproducibles para levantar el entorno y ejecutar el pipeline.
+Cómo correr tests y linter localmente.
+Cómo se onboarding-aría un tenant nuevo siguiendo la arquitectura provista.
+Sección "Qué dejé fuera y por qué" con las decisiones de alcance tomadas.
+9.2 Observaciones a la arquitectura
+Archivo docs/observations.md, obligatorio, con un mínimo de 3 observaciones sustantivas. Cada observación cubre uno de estos ángulos:
+Decisiones de la arquitectura provista con las que no estás de acuerdo, con tu propuesta alternativa y trade-offs.
+Áreas donde la arquitectura provista deja ambigüedad y cómo la resolviste en tu implementación.
+Mejoras tecnológicas que propondrías para próximas iteraciones (Horizonte 2-3).
+9.3 Sustentación
+Reserva 30 minutos en una llamada de sustentación con el equipo evaluador:
+Demo del pipeline en ejecución (10 min).
+Walkthrough de las decisiones de implementación (10 min).
+Discusión sobre las observaciones a la arquitectura (5 min).
+Preguntas abiertas (5 min).
+10. Bonus opcionales
+No son requeridos. A considerar únicamente si se completa el alcance base con tiempo disponible:
+Segunda tabla Gold con un análisis distinto (top materiales por tenant y mes, por ejemplo).
+Ingesta Bronze con Auto Loader o consumer de streaming.
+Dashboard simple (Databricks SQL, Streamlit) sobre la capa Gold.
+Pre-commit hooks.
+Implementación funcional del módulo Terraform (que terraform validate y terraform plan funcionen contra un proveedor real, no solo el snippet ilustrativo de la sección 7.2).
+
+11. Criterios de evaluación
+Eje
+Peso
+Qué se evalúa
+Implementación del pipeline
+40%
+Pipeline funcional, adherencia a la arquitectura provista, idempotencia verificable, SCD Type 2 correctamente aplicado con join temporal, separación de capas, configuración jerárquica limpia.
+Calidad de datos
+15%
+Validaciones no triviales, persistencia en quality_logs según esquema, manejo correcto de anomalías según política definida.
+CI + Terraform
+10%
+Workflow funcional, tests significativos sobre lógica de transformación, snippet de IaC coherente.
+Mentoría / Code review
+15%
+Observaciones puntuales y accionables, refactor genuinamente superior, nota al junior con feedback constructivo.
+Documentación y código
+10%
+README reproducible, naming consistente, cumplimiento de PEP8, commits con historia razonable.
+Criterio y sustentación
+10%
+Calidad de observations.md, capacidad de defender decisiones en la sustentación, propuestas de mejora con criterio.
+
+Aspectos que afectan negativamente la evaluación
+Pipeline que solo funciona con datos o rutas hardcoded.
+Configuración multi-tenant implementada como un filtro WHERE pais = X, sin la estructura jerárquica definida.
+SCD Type 2 implementado usando solo is_current = true en el join (produce métricas históricas incorrectas).
+Materiales no presentes en el catálogo perdidos silenciosamente en el join, sin cuarentena.
+Validaciones de calidad de datos triviales o no persistidas en quality_logs.
+Historial con commits del estilo "final", "v2", "fix all".
+Cambios a la arquitectura provista sin registrarlos en observations.md.
+Implementación del alcance completo sin priorización ni documentación de scope.
+12. Entregables y reglas
+Repositorio GitHub público que contenga código, documentación, diagramas y archivos de configuración.
+Historial de commits con varios commits incrementales.
+Al menos un Pull Request visible en el historial del repositorio.
+Plazo de entrega: 3 días corridos (días calendario, incluyendo fines de semana) desde la entrega de esta prueba. Si se entrega un viernes, el plazo termina el lunes a la misma hora.
+Convención de idiomas: código y nombres de variables en inglés; documentación y comentarios en español o inglés de forma consistente.
+Está permitido el uso de asistentes de IA. La sustentación incluirá preguntas sobre el código entregado.
+Sustentación: una vez entregado el repositorio, el equipo evaluador coordinará una llamada de 30 minutos (Google Meet) dentro de los 5 días hábiles siguientes. El candidato comparte pantalla y demuestra el pipeline corriendo localmente.
+
+Anexo A — Código para revisar
+Coloca el siguiente código en /mentoring/bad_code.py. No lo modifiques ahí; el refactor va en good_code.py.
+import pandas as pd
+from pyspark.sql import SparkSession
+ 
+spark = SparkSession.builder.getOrCreate()
+ 
+def process(file_path, country):
+    df = pd.read_csv(file_path)
+    df = df[df["pais"] == country]
+    result = []
+    for i, row in df.iterrows():
+        if row["tipo_entrega"] == "ZPRE" or row["tipo_entrega"] == "ZVE1":
+            if row["unidad"] == "CS":
+                qty = row["cantidad"] * 20
+            else:
+                qty = row["cantidad"]
+            result.append({
+                "pais": row["pais"],
+                "fecha": row["fecha_proceso"],
+                "material": row["material"],
+                "cantidad_st": qty,
+                "total": qty * row["precio"]
+            })
+    out = pd.DataFrame(result)
+    sdf = spark.createDataFrame(out)
+    sdf.write.mode("overwrite").parquet("/tmp/output/" + country)
+    print("done")
+    return out
+ 
+process("data.csv", "GT")
+
+Áreas de mejora a considerar: uso de pandas donde corresponde Spark nativo, iteración fila por fila, lógica de negocio hardcoded, ausencia de validaciones y tipado, naming inconsistente, manejo de errores inexistente, escritura no idempotente, ausencia de tests, falta de soporte multi-tenant.
+
+Anexo B — Estructura de repositorio sugerida
+Estructura de referencia. Puede proponerse una alternativa documentándola en el README.
+saas-data-platform/
+├── README.md
+├── Makefile  (opcional, recomendado para reproducibilidad)
+├── pyproject.toml  (o requirements.txt)
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── docs/
+│   ├── infra.md           (descripción Terraform + snippet)
+│   ├── observations.md    (obligatorio, mínimo 3 observaciones)
+│   └── onboarding-tenant.md
+├── config/
+│   ├── base.yaml
+│   ├── env/
+│   │   ├── dev.yaml
+│   │   ├── qa.yaml
+│   │   └── main.yaml
+│   └── tenants/
+│       └── sv.yaml
+├── data/                  (creado al ejecutar; no versionar contenido)
+│   ├── bronze/<tenant>/<table>/fecha_proceso=YYYYMMDD/
+│   ├── silver/<tenant>/<table>/fecha_proceso=YYYYMMDD/
+│   ├── gold/<tenant>/<table>/
+│   ├── bronze_quarantine/...
+│   ├── silver_quarantine/...
+│   └── shared/quality_logs/
+├── src/
+│   └── saas_pipeline/
+│       ├── __init__.py
+│       ├── bronze.py
+│       ├── silver.py
+│       ├── gold.py
+│       ├── quality.py
+│       ├── config.py
+│       └── cli.py
+├── tests/
+│   ├── test_silver_transforms.py
+│   └── test_quality.py
+└── mentoring/
+    ├── bad_code.py
+    ├── good_code.py
+    └── code_review.md
+
