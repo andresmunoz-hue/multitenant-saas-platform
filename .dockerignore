@@ -10,3 +10,4 @@ _tech_test_extract/
 _pytest_out.txt
 spark-warehouse/
 metastore_db/
+*.egg-info/

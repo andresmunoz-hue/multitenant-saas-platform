@@ -5,14 +5,20 @@ Pipeline Bronze → Silver → Gold para entregas de producto, multi-tenant (pa�
 ## Estructura
 
 ```text
-config/                 # base + env + tenants (OmegaConf)
-raw/                    # CSV de entrada (versionados)
-src/saas_pipeline/      # bronze, silver, gold, quality, cli
-tests/                  # pytest
-mentoring/              # code review exercise
-docs/                   # arquitectura, plan, observations, infra
-data/                   # Delta local (generado, no versionar)
+config/                      # YAML base / env / tenants
+raw/                         # CSV de entrada
+src/saas_pipeline/
+  domain/                    # reglas puras de negocio
+  application/use_cases/     # orquestación Bronze/Silver/Gold/Quality
+  infrastructure/            # Spark, Delta, config, transforms
+  interfaces/                # CLI
+docs/                        # modelo, plan, architecture, observations
+tests/
+mentoring/
+data/                        # Delta local (generado)
 ```
+
+Detalle de capas: `docs/architecture.md`.
 
 ## Requisitos
 
@@ -57,19 +63,24 @@ python -m saas_pipeline.cli --env dev --tenant sv --start-date 2025-01-01 --end-
 python -m saas_pipeline.cli --env dev --tenant all --start-date 2025-01-01 --end-date 2025-06-30 --layer all
 ```
 
-### Windows + Docker (recomendado para e2e Delta)
+## Dashboard + Docker stack
 
-En Windows nativo, Hadoop/Delta puede fallar por `winutils`/`hadoop.dll`. Usa el contenedor Linux:
+Ver `docs/stack.md`.
 
 ```bash
-docker build -t saas-pipeline:local .
-docker run --rm -v "%cd%/data:/app/data" saas-pipeline:local
-# o rango corto:
-docker run --rm -v "%cd%/data:/app/data" saas-pipeline:local \
-  python3 -m saas_pipeline.cli --env dev --tenant sv --start-date 2025-03-01 --end-date 2025-03-15 --layer all
+docker compose build
+docker compose --profile init run --rm pipeline-init
+docker compose up -d dashboard
+# http://localhost:8501
 ```
 
-Capas: `--layer bronze|silver|gold|all`.
+Local Streamlit (sin Docker), con Gold ya materializado:
+
+```bash
+pip install -r dashboard/requirements.txt
+set DASHBOARD_DATA_ROOT=data
+streamlit run dashboard/app.py
+```
 
 Salidas locales:
 

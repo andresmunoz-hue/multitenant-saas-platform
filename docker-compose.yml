@@ -1,0 +1,69 @@
+# Local stack: Spark/Delta pipeline (Databricks-compatible compute) + Streamlit Gold dashboard
+#
+# Databricks Community Edition is a cloud SaaS workspace — it does NOT run inside Compose.
+# This stack uses the same PySpark+Delta code path locally, writing Medallion tables to ./data.
+
+services:
+  pipeline:
+    image: saas-pipeline:local
+    build:
+      context: .
+      dockerfile: docker/pipeline/Dockerfile
+    container_name: saas-pipeline
+    volumes:
+      - ./data:/app/data
+      - ./raw:/app/raw
+      - ./config:/app/config:ro
+    environment:
+      - DELTA_JARS_DIR=/opt/delta-jars
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    profiles:
+      - batch
+
+  dashboard:
+    image: saas-dashboard:local
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: saas-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/data:ro
+    environment:
+      - DASHBOARD_DATA_ROOT=/data
+    restart: unless-stopped
+
+  pipeline-init:
+    image: saas-pipeline:local
+    build:
+      context: .
+      dockerfile: docker/pipeline/Dockerfile
+    container_name: saas-pipeline-init
+    volumes:
+      - ./data:/app/data
+      - ./raw:/app/raw
+      - ./config:/app/config:ro
+    environment:
+      - DELTA_JARS_DIR=/opt/delta-jars
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    command:
+      [
+        "python3",
+        "-m",
+        "saas_pipeline.cli",
+        "--env",
+        "dev",
+        "--tenant",
+        "all",
+        "--start-date",
+        "2025-01-01",
+        "--end-date",
+        "2025-06-30",
+        "--layer",
+        "all",
+      ]
+    profiles:
+      - init
