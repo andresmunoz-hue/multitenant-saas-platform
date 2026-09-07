@@ -3,6 +3,9 @@
 Pipeline **multi-tenant** Bronze → Silver → Gold para entregas de producto.  
 PySpark 3.5 + Delta 3.x (compatible con Databricks Runtime). Ejecutable en local / Docker.
 
+**Licencia:** propietaria — *All Rights Reserved* ([`LICENSE`](LICENSE)).  
+Código de portafolio / evaluación técnica: se puede **ver**, no reutilizar ni redistribuir sin autorización escrita.
+
 ## Arranque rápido
 
 ```bash
@@ -78,4 +81,10 @@ No corre el pipeline e2e en Actions (sin credenciales / entorno lakehouse compar
 1. `pytest -q`  
 2. `docker compose --profile init run --rm pipeline-init` (o CLI `--tenant sv`)  
 3. Mostrar `data/bronze|silver|gold` + dashboard  
-4. Explicar SCD2 con join temporal (**no** solo `is_current`)
+4. Explicar join temporal SCD2 (**no** solo `is_current`)
+
+## Licencia
+
+© 2026 Andrés Muñoz. **Todos los derechos reservados.**  
+Ver [`LICENSE`](LICENSE): permiso limitado solo para **visualización** (evaluación / portafolio).  
+Queda prohibido el uso, copia, modificación, redistribución o explotación comercial sin autorización escrita.

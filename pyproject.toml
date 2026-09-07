@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Multi-tenant medallion pipeline (Bronze/Silver/Gold) for delivery analytics"
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "Andrés Muñoz" }]
 dependencies = [
   "pyspark==3.5.5",
   "delta-spark==3.2.1",
