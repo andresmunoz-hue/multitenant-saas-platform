@@ -1,38 +1,37 @@
-# Local Docker stack
+# Stack local (Docker Compose)
 
-## What runs locally vs Databricks
+## Local vs Databricks
 
-| Piece | In this Compose? | Notes |
+| Componente | ¿En Compose? | Nota |
 |---|---|---|
-| PySpark + Delta Medallion pipeline | Yes (`pipeline` / `pipeline-init`) | Same code you’d run on Databricks Runtime |
-| Streamlit Gold dashboard | Yes (`dashboard`) | Reads `./data/gold` via Delta |
-| Databricks Community Edition | **No** | Cloud SaaS; not a local container |
-| Unity Catalog / ADLS Gen2 | No | Simulated with local paths under `./data` |
+| Pipeline PySpark + Delta | Sí (`pipeline` / `pipeline-init`) | Mismo código que en Databricks Runtime |
+| Dashboard Streamlit (Gold) | Sí (`dashboard`) | Lee `./data/gold` |
+| Databricks Community Edition | **No** | SaaS en la nube; no es un contenedor local |
+| Unity Catalog / ADLS Gen2 | No | Se simula con rutas bajo `./data` |
 
-Community Edition stays in the cloud: upload notebooks / point paths to DBFS. Locally we validate with Spark containers.
+Para Community: subir notebook y usar `run_pipeline(..., spark=spark)` apuntando a DBFS. En local validamos con el contenedor Spark.
 
-## Services
+## Servicios
 
-- **dashboard** — UI on http://localhost:8501
-- **pipeline** (profile `batch`) — on-demand pipeline run
-- **pipeline-init** (profile `init`) — one-shot full tenant backfill into `./data`
+| Servicio | Perfil | Descripción |
+|---|---|---|
+| `dashboard` | (default) | UI en http://localhost:8501 |
+| `pipeline` | `batch` | Ejecución on-demand del CLI |
+| `pipeline-init` | `init` | Backfill one-shot de todos los tenants → `./data` |
 
-## Quick start
+## Uso
 
 ```bash
-# 1) Build images
 docker compose build
 
-# 2) Materialize Bronze/Silver/Gold (all tenants)
+# Materializar capas
 docker compose --profile init run --rm pipeline-init
 
-# 3) Start dashboard
+# UI
 docker compose up -d dashboard
 ```
 
-Open http://localhost:8501
-
-Re-run pipeline later:
+Reproceso puntual:
 
 ```bash
 docker compose --profile batch run --rm pipeline \
@@ -40,12 +39,11 @@ docker compose --profile batch run --rm pipeline \
   --start-date 2025-03-01 --end-date 2025-03-15 --layer all
 ```
 
-## Dockerfiles
+## Imágenes
 
-| Image | Dockerfile |
+| Imagen | Dockerfile |
 |---|---|
-| Pipeline (Spark/Delta) | `docker/pipeline/Dockerfile` |
-| Dashboard (Streamlit) | `dashboard/Dockerfile` |
-| Legacy root image | `Dockerfile` (same pipeline recipe) |
+| Pipeline | `docker/pipeline/Dockerfile` (también `Dockerfile` en la raíz) |
+| Dashboard | `dashboard/Dockerfile` |
 
-Shared volume: host `./data` ↔ pipeline `/app/data` and dashboard `/data`.
+Volumen compartido: host `./data` ↔ pipeline `/app/data` y dashboard `/data`.

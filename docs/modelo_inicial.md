@@ -14,7 +14,7 @@ Revisión del `.docx` (XML interno):
 | Texto blanco (`#FFFFFF`) | Solo encabezados de tabla sobre fondo azul (UI, no secreto) |
 | `w:sz="4"` / gris `B0B0B0` | Atributos de borde, no tipografía oculta |
 
-**Conclusión:** no hay instrucciones ocultas adicionales. El contrato está en el texto visible (secciones 4–12). Texto extraído en `docs/prueba_tecnica_texto_extraido.txt`.
+**Conclusión:** no hay instrucciones ocultas adicionales. El contrato está en el texto visible del briefing (secciones 4–12).
 
 ## 2. Fuentes RAW
 

@@ -34,4 +34,4 @@ El enunciado usa `BETWEEN valid_from AND valid_to`. En SCD2 a veces `valid_to` e
 - **Unity Catalog** real: schemas `bronze_<tenant>` + grants automáticos vía Terraform module.
 - **Expectations declarativas** (DQX / custom rules engine) versionadas junto al config del tenant.
 - **Gold cross-tenant** en schema shared con row-level security para análisis regional.
-- **Observabilidad:** métricas de descartes/cuarentena exportadas a un dashboard operativo (no solo `quality_logs`).
+- **Observabilidad:** métricas de descartes/cuarentena en un dashboard operativo (el MVP ya incluye Streamlit sobre Gold; el siguiente paso sería alertas y SLAs de calidad).

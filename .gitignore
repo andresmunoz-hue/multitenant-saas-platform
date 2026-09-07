@@ -20,11 +20,12 @@ htmlcov/
 spark-warehouse/
 metastore_db/
 derby.log
+_pytest_out.txt
+
+# Local brief extracts / scratch
+_tech_test_extract/
 
 # IDE
 .idea/
 .vscode/
 *.swp
-
-# Extracted brief (local working copy; keep docs/ extracts)
-_tech_test_extract/
