@@ -69,8 +69,7 @@ Helpers internos Silver (no API pública): `_upsert_dim_materials`, `_merge_fact
 |---|---|
 | `build_parser()` | CLI: `--env`, `--tenant`, fechas, `--layer`, `--raw-deliveries`, `--raw-materials` |
 | `main(argv?)` | Parse + `run_pipeline` |
-
-Los módulos raíz (`bronze.py`, `silver.py`, `quality.py`, `cli.py`, …) reexportan estas APIs (shims).
+| `__main__.py` | `python -m saas_pipeline` → `main()` |
 
 ---
 

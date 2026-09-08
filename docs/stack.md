@@ -57,7 +57,7 @@ Reproceso puntual:
 
 ```bash
 docker compose --profile batch run --rm pipeline \
-  python3 -m saas_pipeline.cli --env dev --tenant sv \
+  python3 -m saas_pipeline --env dev --tenant sv \
   --start-date 2025-03-01 --end-date 2025-03-15 --layer all
 ```
 
@@ -65,7 +65,7 @@ Segundo CSV de muestra (`batch2`, julio 2025, Delta bajo `data/*_batch2`):
 
 ```bash
 docker compose --profile batch run --rm pipeline \
-  python3 -m saas_pipeline.cli --env batch2 --tenant all \
+  python3 -m saas_pipeline --env batch2 --tenant all \
   --start-date 2025-07-01 --end-date 2025-07-31 --layer all
 ```
 

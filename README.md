@@ -31,21 +31,21 @@ docker compose -f docker-compose.queries.yml run --rm queries
 Sin Docker (pipeline nativo; en Windows puede fallar Delta por Hadoop — preferir Docker):
 
 ```bash
-python -m saas_pipeline.cli --env dev --tenant sv \
+python -m saas_pipeline --env dev --tenant sv \
   --start-date 2025-01-01 --end-date 2025-06-30 --layer all
 ```
 
 Segundo archivo de prueba (mismo esquema, fechas julio 2025, salida aislada en `data/*_batch2`):
 
 ```bash
-python -m saas_pipeline.cli --env batch2 --tenant sv \
+python -m saas_pipeline --env batch2 --tenant sv \
   --start-date 2025-07-01 --end-date 2025-07-31 --layer all
 ```
 
 O override de path sin cambiar de env:
 
 ```bash
-python -m saas_pipeline.cli --env dev --tenant sv \
+python -m saas_pipeline --env dev --tenant sv \
   --raw-deliveries raw/global_mobility_data_entrega_productos_batch2.csv \
   --start-date 2025-07-01 --end-date 2025-07-31 --layer all
 ```
@@ -70,6 +70,7 @@ Tenants de muestra: `sv`, `hn`, `ec`, `gt`, `jm`, `pe` (`pais` del CSV → `_ten
 config/           YAML jerárquico (base / env / tenants)
 raw/              CSV de entrada (versionados)
 src/saas_pipeline/
+  __main__.py         python -m saas_pipeline
   domain/             reglas de negocio puras
   application/        use cases (B/S/G/quality/orquestación)
   infrastructure/     Spark, Delta, config, transforms

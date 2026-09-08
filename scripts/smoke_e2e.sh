@@ -17,7 +17,7 @@ run_once() {
   local label="$1"
   echo "==> smoke run (${label}) tenant=${TENANT} ${START}..${END}"
   docker compose --profile smoke run --rm pipeline-smoke \
-    python3 -m saas_pipeline.cli \
+    python3 -m saas_pipeline \
       --env dev \
       --tenant "${TENANT}" \
       --start-date "${START}" \

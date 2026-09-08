@@ -24,7 +24,7 @@ infrastructure/
 | `infrastructure` | domain, Spark/Delta/YAML | interfaces |
 | `interfaces` | application | detalles de Delta |
 
-Los módulos raíz (`bronze.py`, `silver.py`, `cli.py`, …) son **shims** de compatibilidad para tests e imports históricos.
+Entrypoint CLI: `python -m saas_pipeline` → `interfaces/cli.py` (vía `__main__.py`).
 
 ## Databricks / notebook
 

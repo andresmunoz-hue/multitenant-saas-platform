@@ -8,14 +8,14 @@ See ``docs/functions_and_tests.md``.
 import pytest
 from pyspark.sql import functions as F
 
-from saas_pipeline.silver import (
+from saas_pipeline.domain.rules.delivery_types import is_valid_delivery_type
+from saas_pipeline.domain.rules.units import cs_to_st
+from saas_pipeline.infrastructure.spark.session import build_spark
+from saas_pipeline.infrastructure.transforms.silver_transforms import (
     apply_anomaly_rules,
-    cs_to_st,
     enrich_with_scd,
-    is_valid_delivery_type,
     normalize_units,
 )
-from saas_pipeline.spark import build_spark
 
 
 @pytest.fixture(scope="module")

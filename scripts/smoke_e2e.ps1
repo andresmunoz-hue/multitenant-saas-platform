@@ -11,7 +11,7 @@ $GoldDir = "data/gold/$Tenant/daily_metrics_by_delivery_type"
 function Invoke-SmokeRun([string]$Label) {
     Write-Host "==> smoke run ($Label) tenant=$Tenant $Start..$End"
     docker compose --profile smoke run --rm pipeline-smoke `
-        python3 -m saas_pipeline.cli `
+        python3 -m saas_pipeline `
         --env dev `
         --tenant $Tenant `
         --start-date $Start `

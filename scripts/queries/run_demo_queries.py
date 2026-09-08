@@ -114,7 +114,7 @@ def _register(spark: SparkSession, path: Path, view: str) -> bool:
 
 
 def run(data_root: Path, tenant: str) -> int:
-    from saas_pipeline.spark import build_spark
+    from saas_pipeline.infrastructure.spark.session import build_spark
 
     spark = build_spark("demo-queries")
     print(f"data_root={data_root} tenant={tenant}")

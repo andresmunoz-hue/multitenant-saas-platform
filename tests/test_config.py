@@ -5,7 +5,8 @@ tenant resolution, and alternate ``batch2`` / raw path overrides.
 See ``docs/functions_and_tests.md``.
 """
 
-from saas_pipeline.config import KNOWN_TENANTS, load_config, resolve_tenants
+from saas_pipeline.domain.constants import KNOWN_TENANTS
+from saas_pipeline.infrastructure.config.loader import load_config, resolve_tenants
 
 
 def test_load_base_and_dev_paths():

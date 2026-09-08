@@ -9,8 +9,11 @@ from __future__ import annotations
 import pytest
 from pyspark.sql import functions as F
 
-from saas_pipeline.silver import apply_anomaly_rules, enrich_with_scd
-from saas_pipeline.spark import build_spark
+from saas_pipeline.infrastructure.spark.session import build_spark
+from saas_pipeline.infrastructure.transforms.silver_transforms import (
+    apply_anomaly_rules,
+    enrich_with_scd,
+)
 
 
 @pytest.fixture(scope="module")

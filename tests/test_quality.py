@@ -8,12 +8,12 @@ from pathlib import Path
 
 from pyspark.sql import functions as F
 
-from saas_pipeline.quality import (
+from saas_pipeline.infrastructure.spark.session import build_spark
+from saas_pipeline.infrastructure.transforms.quality_checks import (
     check_delivery_type_domain,
     check_fk_material_resolved,
     check_qty_st_positive,
 )
-from saas_pipeline.spark import build_spark
 
 
 def test_quality_checks_detect_failures(tmp_path: Path):

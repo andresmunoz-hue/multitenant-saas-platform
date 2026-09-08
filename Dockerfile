@@ -30,4 +30,4 @@ RUN pip3 install --no-cache-dir -U pip setuptools wheel \
     && pip3 install --no-cache-dir -r requirements.txt \
     && pip3 install --no-cache-dir .
 
-CMD ["python3", "-m", "saas_pipeline.cli", "--env", "dev", "--tenant", "all", "--start-date", "2025-01-01", "--end-date", "2025-06-30", "--layer", "all"]
+CMD ["python3", "-m", "saas_pipeline", "--env", "dev", "--tenant", "all", "--start-date", "2025-01-01", "--end-date", "2025-06-30", "--layer", "all"]

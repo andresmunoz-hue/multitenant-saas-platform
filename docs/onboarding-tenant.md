@@ -15,7 +15,7 @@ execution:
 4. Ejecutar:
 
 ```bash
-python -m saas_pipeline.cli --env dev --tenant xx --start-date 2025-01-01 --end-date 2025-06-30 --layer all
+python -m saas_pipeline --env dev --tenant xx --start-date 2025-01-01 --end-date 2025-06-30 --layer all
 ```
 
 5. Verificar paths:

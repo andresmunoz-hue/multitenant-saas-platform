@@ -53,7 +53,7 @@ services:
       [
         "python3",
         "-m",
-        "saas_pipeline.cli",
+        "saas_pipeline",
         "--env",
         "dev",
         "--tenant",
@@ -87,7 +87,7 @@ services:
       [
         "python3",
         "-m",
-        "saas_pipeline.cli",
+        "saas_pipeline",
         "--env",
         "dev",
         "--tenant",

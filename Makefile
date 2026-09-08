@@ -18,10 +18,10 @@ test:
 	$(PY) -m pytest -q
 
 spark-check:
-	$(PY) -c "from saas_pipeline.spark import build_spark; s=build_spark('spark-check'); print(s.version); s.stop()"
+	$(PY) -c "from saas_pipeline.infrastructure.spark.session import build_spark; s=build_spark('spark-check'); print(s.version); s.stop()"
 
 pipeline-dev:
-	$(PY) -m saas_pipeline.cli --env dev --tenant all --start-date 2025-01-01 --end-date 2025-06-30 --layer all
+	$(PY) -m saas_pipeline --env dev --tenant all --start-date 2025-01-01 --end-date 2025-06-30 --layer all
 
 clean:
 	rm -rf data spark-warehouse metastore_db derby.log .pytest_cache .ruff_cache
