@@ -36,3 +36,7 @@ El enunciado usa `BETWEEN valid_from AND valid_to`. En SCD2 a veces `valid_to` e
 - **Gold cross-tenant** en schema shared con row-level security para análisis regional.
 - **Observabilidad:** métricas de descartes/cuarentena en un dashboard operativo (el MVP ya incluye Streamlit con tabs Gold / Quality / Quarantine + BATCH SUMMARY en CLI; el siguiente paso sería alertas y SLAs de calidad).
 - **Idempotencia Bronze:** overwrite por `replaceWhere` en la ventana de fechas; cubierto con tests de predicado estable + smoke Docker de doble corrida.
+
+---
+
+Observaciones de implementación / contrato SCD2 (upsert `material+valid_from`, close/insert, `row_number`): ver **[observations_adicionales.md](observations_adicionales.md)** (la #1 es el criterio de actualización de `dim_materials`).

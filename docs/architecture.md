@@ -26,6 +26,8 @@ infrastructure/
 
 Entrypoint CLI: `python -m saas_pipeline` → `interfaces/cli.py` (vía `__main__.py`).
 
+**Por qué / ventajas en este MVP:** ver [observations_adicionales.md §5](observations_adicionales.md).
+
 ## Databricks / notebook
 
 ```python
